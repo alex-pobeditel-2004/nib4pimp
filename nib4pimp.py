@@ -4,12 +4,10 @@ import math
 import argparse
 import cairo
 
+import fonts
 # TODO: MANUAL HEX COLORS
 # TODO: Paper presets
 # TODO: Type name in the corner
-
-main_line = [0.6, 0.6, 0.6, 1]
-aux_line =  [0.933, 0.933, 0.933, 1]
 
 def main():
     '''Get args from command line'''
@@ -25,7 +23,7 @@ def main():
              "2 - Antiqua Sans\n" +
              "3 - Blackletter\n" +
              "4 - Italic\n" +
-             "5 - Copperplate\n" +
+             "5 - Copperplate (ignores nib size)\n" +
              "6 - Rustic\n" +
              "7 - Insular script, Uncial, Ustav\n" +
              "8 - Half-ustav\n" +
@@ -77,6 +75,10 @@ def main():
     if error_flag != 0:
         sys.exit(1)
 
+    # Ignore the nib size user decision if copperplate chosen:
+    if args.font == "5":
+        args.nib_size = 8.75
+
     return args
 
 
@@ -113,153 +115,29 @@ def create_surface(paper_size, filetype, output):
 def draw_grid(surface, context, font, nib_size, field):
     '''Choose proper draw function based on chosen font'''
     if font == "1":
-        surface, context = roman_square_capitals(surface, context, nib_size, field)
+        surface, context = fonts.roman_square_capitals(surface, context, nib_size, field)
     elif font == "2":
-        surface, context = antiqua_sans(surface, context, nib_size, field)
+        surface, context = fonts.antiqua_sans(surface, context, nib_size, field)
     elif font == "3":
-        surface, context = blackletter(surface, context, nib_size, field)
+        surface, context = fonts.blackletter(surface, context, nib_size, field)
+    elif font == "4":
+        surface, context = fonts.italic(surface, context, nib_size, field)
+    elif font == "5":
+        surface, context = fonts.copperplate(surface, context, nib_size, field)
+    elif font == "6":
+        # Rustic
+        surface, context = fonts.rustic_ustav_minuscule(surface, context, nib_size, field, 6)
+    elif font == "7":
+        # Ustav
+        surface, context = fonts.rustic_ustav_minuscule(surface, context, nib_size, field, 5)
+    elif font == "8":
+        # Half-ustav
+        surface, context = fonts.rustic_ustav_minuscule(surface, context, nib_size, field, 4)
+    elif font == "9":
+        # Minuscule
+        surface, context = fonts.rustic_ustav_minuscule(surface, context, nib_size, field, 3)
     else:
         sys.exit()
-
-    return surface, context
-
-
-def roman_square_capitals(surface, context, step, field):
-    '''This function realizes the grid for the roman square capitals'''
-    xpos = 0
-    ypos = 0
-
-    context.set_line_width(1)
-    context.set_line_join(cairo.LINE_JOIN_MITER)
-
-    while ypos < field[1]:
-        while xpos < field[0]:
-            # Surrounding rectangles:
-            context.set_source_rgba(*aux_line)
-                # x, y, width, height
-            for args in [(step,    0,       10*step, step),
-                         (step,    11*step, 10*step, step),
-                         (0,       step,    step,    10*step),
-                         (11*step, step,    step,    10*step)]:
-                context.rectangle(xpos + args[0], ypos + args[1], args[2], args[3])
-                context.stroke()
-
-            # Circles:
-            context.set_line_width(0.8)
-                # x, y
-            for args in [(1*step,    2*step),
-                         (4*step,    2*step),
-                         (8*step,    2*step),
-                         (11*step,   2*step),
-                         (1*step,    10*step),
-                         (4*step,    10*step),
-                         (8*step,    10*step),
-                         (11*step,   10*step)]:
-                context.arc(xpos + args[0], ypos + args[1], step*0.96, 0, 2*math.pi)
-                context.stroke()
-
-            # Small squares:
-            context.set_line_width(1)
-            for y in range(0,10):
-                for x in range(0,10):
-                    context.rectangle(xpos + (1 + x)*step, ypos + (1 + y)* step, step, step)
-                    context.stroke()
-
-            # Main squares:
-            context.set_source_rgba(*main_line)
-            context.rectangle(xpos + step, ypos + step, 10*step, 10*step)
-            context.stroke()
-
-            # Main lines:
-            context.move_to(xpos + 6*step, ypos)
-            context.line_to(xpos + 6*step, ypos + 12*step)
-            context.move_to(xpos, ypos + 6*step)
-            context.line_to(xpos + 12*step, ypos + 6*step)
-            context.stroke()
-
-            xpos += 12*step
-        xpos = 0
-        ypos += 12*step
-
-    return surface, context
-
-
-def antiqua_sans(surface, context, step, field):
-    '''This function realizes the grid for the antiqua sans'''
-    xpos = 0
-    ypos = 0
-    # Define multiplier for this grid:
-    multiplier = math.cos(math.radians(25))
-    # Find the vertical delta for a 25 degrees line for chosen paper:
-    y_delta = field[0]*math.tan(math.radians(25))
-
-    context.set_line_width(1)
-    context.set_line_join(cairo.LINE_JOIN_MITER)
-
-    # Diagonal lines:
-    context.set_source_rgba(*aux_line)
-    while ypos < field[1] + y_delta:
-        context.move_to(0, ypos + multiplier*step)
-        context.line_to(field[0], ypos - y_delta)
-        context.stroke()
-        ypos += multiplier*step
-
-    ypos = 0
-    while ypos < field[1]:
-        while xpos < field[0]:
-            # Aux vertical lines:
-            context.set_source_rgba(*aux_line)
-            context.move_to(xpos + 2*multiplier*step, ypos + 2*multiplier*step)
-            context.line_to(xpos + 2*multiplier*step, ypos + 8*multiplier*step)
-            context.move_to(xpos + 3*multiplier*step, ypos + 2*multiplier*step)
-            context.line_to(xpos + 3*multiplier*step, ypos + 8*multiplier*step)
-            context.stroke()
-            xpos += 6*multiplier*step
-        xpos = 0
-        # Main horizontal lines:
-        context.set_source_rgba(*main_line)
-        context.move_to(0, ypos + 2*multiplier*step)
-        context.line_to(field[0], ypos + 2*multiplier*step)
-        context.move_to(0, ypos + 8*multiplier*step)
-        context.line_to(field[0], ypos + 8*multiplier*step)
-        context.stroke()
-        ypos += 8*multiplier*step
-
-    return surface, context
-
-
-def blackletter(surface, context, step, field):
-    '''This function realizes the grid for the blackletter'''
-    xpos = 0
-    ypos = 0
-    # Define multiplier for this grid:
-    multiplier = math.cos(math.radians(30))
-
-    context.set_line_width(1)
-    context.set_line_join(cairo.LINE_JOIN_MITER)
-
-    # Aux vertical lines:
-    context.set_source_rgba(*aux_line)
-    while xpos < field[0]:
-        context.move_to(xpos, 0)
-        context.line_to(xpos, field[1])
-        xpos += multiplier*step
-
-    while ypos < field[1]:
-        # Aux horizontal lines:
-        context.set_source_rgba(*aux_line)
-        for arg in [0, 3, 4, 5, 6]:
-            context.move_to(0, ypos + arg*multiplier*step)
-            context.line_to(field[0], ypos + arg*multiplier*step)
-        context.stroke()
-        # Main horizontal lines:
-        context.set_source_rgba(*main_line)
-        context.move_to(0, ypos + 2*multiplier*step)
-        context.line_to(field[0], ypos + 2*multiplier*step)
-        context.move_to(0, ypos + 7*multiplier*step)
-        context.line_to(field[0], ypos + 7*multiplier*step)
-        context.stroke()
-        ypos += 9*multiplier*step
 
     return surface, context
 
