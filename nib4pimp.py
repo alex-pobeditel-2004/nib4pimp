@@ -16,8 +16,7 @@ def main():
         description="Let's create the grid!",
         formatter_class=argparse.RawTextHelpFormatter
     )
-    # debug: remove default, add required later
-    parser.add_argument("-f", "--font", type=str, metavar="FONT", choices=["1", "2", "3", "4", "5", "6", "7", "8", "9"], default="1",
+    parser.add_argument("-f", "--font", type=str, metavar="FONT", choices=["1", "2", "3", "4", "5", "6", "7", "8", "9"], required=True,
         help="Font which you want generate a grid for. Accepted values:\n" +
              "1 - Roman square capitals\n" +
              "2 - Antiqua Sans\n" +
