@@ -11,7 +11,7 @@ def roman_square_capitals(surface, context, step, field):
     xpos = 0
     ypos = 0
 
-    context.set_line_width(1)
+    context.set_line_width(0.5)
     context.set_line_cap(cairo.LINE_CAP_SQUARE)
     context.set_line_join(cairo.LINE_JOIN_MITER)
 
@@ -28,7 +28,7 @@ def roman_square_capitals(surface, context, step, field):
             context.stroke()
 
             # Circles:
-            context.set_line_width(0.8)
+            context.set_line_width(0.3)
                 # x, y
             for args in [(1*step,    2*step),
                          (4*step,    2*step),
@@ -42,7 +42,7 @@ def roman_square_capitals(surface, context, step, field):
                 context.stroke()
 
             # Small squares:
-            context.set_line_width(1)
+            context.set_line_width(0.5)
             for y in range(0,10):
                 for x in range(0,10):
                     context.rectangle(xpos + (1 + x)*step, ypos + (1 + y)* step, step, step)
@@ -74,7 +74,7 @@ def antiqua_sans(surface, context, step, field):
     # Define multiplier for this grid:
     multiplier = math.cos(math.radians(25))
 
-    context.set_line_width(1)
+    context.set_line_width(0.5)
     context.set_line_cap(cairo.LINE_CAP_SQUARE)
     context.set_line_join(cairo.LINE_JOIN_MITER)
 
@@ -119,7 +119,7 @@ def blackletter(surface, context, step, field):
     # Define multiplier for this grid:
     multiplier = math.cos(math.radians(30))
 
-    context.set_line_width(1)
+    context.set_line_width(0.5)
     context.set_line_cap(cairo.LINE_CAP_SQUARE)
     context.set_line_join(cairo.LINE_JOIN_MITER)
 
@@ -154,7 +154,7 @@ def copperplate(surface, context, step, field):
     '''This function realizes the grid for the copperplate'''
     ypos = 0
 
-    context.set_line_width(1)
+    context.set_line_width(0.5)
     context.set_line_cap(cairo.LINE_CAP_SQUARE)
     context.set_line_join(cairo.LINE_JOIN_MITER)
 
@@ -185,7 +185,7 @@ def italic(surface, context, step, field):
     xpos = 0
     ypos = 0
 
-    context.set_line_width(1)
+    context.set_line_width(0.5)
     context.set_line_cap(cairo.LINE_CAP_SQUARE)
     context.set_line_join(cairo.LINE_JOIN_MITER)
 
@@ -246,13 +246,13 @@ def rustic_ustav_minuscule(surface, context, step, field, multiplier):
     '''This function realizes the grid for the rustic, ustav, half-ustav and minuscule'''
     ypos = 0
 
-    context.set_line_width(1)
+    context.set_line_width(0.5)
     context.set_line_cap(cairo.LINE_CAP_SQUARE)
     context.set_line_join(cairo.LINE_JOIN_MITER)
 
     while ypos < field[1]:
         # Horizontal lines:
-        context.set_source_rgba(*aux_line)
+        context.set_source_rgba(*main_line)
         context.move_to(0, ypos + 1.5*step)
         context.line_to(field[0], ypos + 1.5*step)
         context.move_to(0, ypos + (multiplier + 1.5)*step)
