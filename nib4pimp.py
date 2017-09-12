@@ -5,9 +5,11 @@ import argparse
 import cairo
 
 import fonts
+
 # TODO: MANUAL HEX COLORS
 # TODO: Paper presets
 # TODO: Type name in the corner
+# TODO: Shashechki
 
 def main():
     '''Get args from command line'''
@@ -24,7 +26,7 @@ def main():
              "4 - Italic\n" +
              "5 - Copperplate (ignores nib size)\n" +
              "6 - Rustic\n" +
-             "7 - Insular script, Uncial, Ustav\n" +
+             "7 - Uncial, Half-Uncial, Ustav\n" +
              "8 - Half-ustav\n" +
              "9 - Caroline minuscule")
     parser.add_argument("-n", "--nib-size", type=float, metavar="NUMBER", required=True,
@@ -40,6 +42,9 @@ def main():
     parser.add_argument("-y", "--y-paper", type=float, metavar="NUMBER", default=297,
         help="Paper heigth in millimeters. Accepted values:\n" +
              "50 ... 5000, default: 297")
+    parser.add_argument("-m", "--margins", type=int, metavar="NUMBER", default=15,
+        help="Margin size in millimeters (common for all edges). Actual only for PDF. Accepted values:\n" +
+             "5 ... 30, default: 15")
     parser.add_argument("-r", "--resolution", type=int, metavar="NUMBER", default=300,
         help="DPI value for PNG/SVG images Accepted values:\n" +
              "1 ... 2400, default: 300")
@@ -67,6 +72,10 @@ def main():
         print("[ERROR] Wrong paper size")
         error_flag = 1
 
+    if (not 5 <= args.margins <= 30):
+        print("[ERROR] Wrong margin size")
+        error_flag = 1
+
     if (not 1 <= args.resolution <= 2000):
         print("[ERROR] Wrong print resolution")
         error_flag = 1
@@ -77,6 +86,13 @@ def main():
     # Ignore the nib size user decision if copperplate chosen:
     if args.font == "5":
         args.nib_size = 8.75
+        print("[INFO] Nib size is ignored for copperplate grid")
+
+    # Do not add margins if output format differs from PDF:
+    if args.type != "PDF":
+        if args.margins != 15:
+            print("[INFO] Margins aren't used in formats other than PDF")
+        args.margins = 0
 
     return args
 
@@ -88,11 +104,13 @@ def prepare(raw_args):
         raw_args.nib_size = round(raw_args.nib_size/0.3527)
         raw_args.x_paper = round(raw_args.x_paper/0.3527)
         raw_args.y_paper = round(raw_args.y_paper/0.3527)
+        raw_args.margins = round(raw_args.margins/0.3527)
     else:
         # Pixels
         raw_args.nib_size = round(raw_args.nib_size*raw_args.resolution/25.4)
         raw_args.x_paper = round(raw_args.x_paper*raw_args.resolution/25.4)
         raw_args.y_paper = round(raw_args.y_paper*raw_args.resolution/25.4)
+        raw_args.margins = round(raw_args.margins*raw_args.resolution/25.4)
 
     return raw_args
 
@@ -111,32 +129,44 @@ def create_surface(paper_size, filetype, output):
     return surface, context
 
 
-def draw_grid(surface, context, font, nib_size, field):
+def draw_grid(surface, context, font, nib_size, field, margins):
     '''Choose proper draw function based on chosen font'''
     if font == "1":
-        surface, context = fonts.roman_square_capitals(surface, context, nib_size, field)
+        surface, context = fonts.roman_square_capitals(surface, context, nib_size, field, margins)
     elif font == "2":
-        surface, context = fonts.antiqua_sans(surface, context, nib_size, field)
+        surface, context = fonts.antiqua_sans(surface, context, nib_size, field, margins)
     elif font == "3":
-        surface, context = fonts.blackletter(surface, context, nib_size, field)
+        surface, context = fonts.blackletter(surface, context, nib_size, field, margins)
     elif font == "4":
-        surface, context = fonts.italic(surface, context, nib_size, field)
+        surface, context = fonts.italic(surface, context, nib_size, field, margins)
     elif font == "5":
-        surface, context = fonts.copperplate(surface, context, nib_size, field)
+        surface, context = fonts.copperplate(surface, context, nib_size, field, margins)
     elif font == "6":
         # Rustic
-        surface, context = fonts.rustic_ustav_minuscule(surface, context, nib_size, field, 6)
+        surface, context = fonts.rustic_ustav_minuscule(surface, context, nib_size, field, margins, 6)
     elif font == "7":
         # Ustav
-        surface, context = fonts.rustic_ustav_minuscule(surface, context, nib_size, field, 5)
+        surface, context = fonts.rustic_ustav_minuscule(surface, context, nib_size, field, margins, 5)
     elif font == "8":
         # Half-ustav
-        surface, context = fonts.rustic_ustav_minuscule(surface, context, nib_size, field, 4)
+        surface, context = fonts.rustic_ustav_minuscule(surface, context, nib_size, field, margins, 4)
     elif font == "9":
         # Minuscule
-        surface, context = fonts.rustic_ustav_minuscule(surface, context, nib_size, field, 3)
+        surface, context = fonts.rustic_ustav_minuscule(surface, context, nib_size, field, margins, 3)
     else:
         sys.exit()
+
+    return surface, context
+
+
+def draw_margins(surface, context, field, margins):
+    '''Draw margins for PDF documents'''
+    context.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
+    context.set_source_rgba(1, 1, 1, 1)
+    context.rectangle(0 + margins, 0 + margins, field[0] - 2*margins, field[1] - 2*margins)
+    context.rectangle(0, 0, field[0], field[1])
+    context.stroke_preserve()
+    context.fill()
 
     return surface, context
 
@@ -153,5 +183,6 @@ if __name__ == "__main__":
     raw_args = main()
     args = prepare(raw_args)
     surface, context = create_surface((args.x_paper, args.y_paper), args.type, args.output_file)
-    surface, context = draw_grid(surface, context, args.font, args.nib_size, (args.x_paper, args.y_paper))
+    surface, context = draw_grid(surface, context, args.font, args.nib_size, (args.x_paper, args.y_paper), args.margins)
+    surface, context = draw_margins(surface, context, (args.x_paper, args.y_paper), args.margins)
     save_result(surface, context, args.type, args.output_file)
