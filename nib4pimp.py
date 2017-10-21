@@ -6,10 +6,20 @@ import cairo
 
 import fonts
 
-# TODO: MANUAL HEX COLORS
 # TODO: Paper presets
-# TODO: Type name in the corner
 # TODO: Shashechki
+
+font_dict = {
+    "1": "Roman square capitals",
+    "2": "Antiqua Sans",
+    "3": "Blackletter",
+    "4": "Italic",
+    "5": "Copperplate",
+    "6": "Rustic",
+    "7": "Insular script, Uncial, Ustav",
+    "8": "Half-ustav",
+    "9": "Caroline minuscule"
+}
 
 def main():
     '''Get args from command line'''
@@ -20,15 +30,15 @@ def main():
     )
     parser.add_argument("-f", "--font", type=str, metavar="FONT", choices=["1", "2", "3", "4", "5", "6", "7", "8", "9"], required=True,
         help="Font which you want generate a grid for. Accepted values:\n" +
-             "1 - Roman square capitals\n" +
-             "2 - Antiqua Sans\n" +
-             "3 - Blackletter\n" +
-             "4 - Italic\n" +
-             "5 - Copperplate (ignores nib size)\n" +
-             "6 - Rustic\n" +
-             "7 - Uncial, Half-Uncial, Ustav\n" +
-             "8 - Half-ustav\n" +
-             "9 - Caroline minuscule")
+             "1 - " + font_dict["1"] + "\n" +
+             "2 - " + font_dict["2"] + "\n" +
+             "3 - " + font_dict["3"] + "\n" +
+             "4 - " + font_dict["4"] + "\n" +
+             "5 - " + font_dict["5"] + "\n" +
+             "6 - " + font_dict["6"] + "\n" +
+             "7 - " + font_dict["7"] + "\n" +
+             "8 - " + font_dict["8"] + "\n" +
+             "9 - " + font_dict["9"])
     parser.add_argument("-n", "--nib-size", type=float, metavar="NUMBER", required=True,
         help="Width of nib in millimeters. Accepted values:\n" +
              "0.2 ... 30")
@@ -38,10 +48,10 @@ def main():
              "PDF (default), PNG, SVG")
     parser.add_argument("-x", "--x-paper", type=float, metavar="NUMBER", default=210,
         help="Paper width in millimeters. Accepted values:\n" +
-             "50 ... 5000, default: 210")
+             "100 ... 5000, default: 210")
     parser.add_argument("-y", "--y-paper", type=float, metavar="NUMBER", default=297,
         help="Paper heigth in millimeters. Accepted values:\n" +
-             "50 ... 5000, default: 297")
+             "100 ... 5000, default: 297")
     parser.add_argument("-m", "--margins", type=int, metavar="NUMBER", default=15,
         help="Margin size in millimeters (common for all edges). Actual only for PDF. Accepted values:\n" +
              "5 ... 30, default: 15")
@@ -68,7 +78,7 @@ def main():
     if not 0.2 <= args.nib_size <= 30:
         print("[ERROR] Wrong nib size")
         error_flag = 1
-    if (not 50 <= args.x_paper <= 5000) or (not 50 <= args.y_paper <= 5000):
+    if (not 100 <= args.x_paper <= 5000) or (not 100 <= args.y_paper <= 5000):
         print("[ERROR] Wrong paper size")
         error_flag = 1
 
@@ -92,7 +102,10 @@ def main():
     if args.type != "PDF":
         if args.margins != 15:
             print("[INFO] Margins aren't used in formats other than PDF")
-        args.margins = 0
+
+    # Preserve the nib size to show it in the info string:
+    global nib_mm
+    nib_mm = args.nib_size
 
     return args
 
@@ -131,6 +144,8 @@ def create_surface(paper_size, filetype, output):
 
 def draw_grid(surface, context, font, nib_size, field, margins):
     '''Choose proper draw function based on chosen font'''
+    context.save()
+
     if font == "1":
         surface, context = fonts.roman_square_capitals(surface, context, nib_size, field, margins)
     elif font == "2":
@@ -156,17 +171,39 @@ def draw_grid(surface, context, font, nib_size, field, margins):
     else:
         sys.exit()
 
+    context.restore()
+
     return surface, context
 
 
 def draw_margins(surface, context, field, margins):
     '''Draw margins for PDF documents'''
+    context.save()
+
     context.set_fill_rule(cairo.FILL_RULE_EVEN_ODD)
     context.set_source_rgba(1, 1, 1, 1)
     context.rectangle(0 + margins, 0 + margins, field[0] - 2*margins, field[1] - 2*margins)
     context.rectangle(0, 0, field[0], field[1])
     context.stroke_preserve()
     context.fill()
+
+    context.restore()
+
+    return surface, context
+
+
+def write_info(surface, context, font, nib_size, margins):
+    '''Write the information about chosen grid and nib'''
+    context.save()
+
+    context.set_source_rgba(*fonts.main_line)
+    text_props = context.text_extents("{}; {} mm".format(font_dict[font], nib_size))
+    v_text_center = math.ceil(text_props[2]) # Width
+    context.move_to(margins - 3, v_text_center + margins + 3)
+    context.rotate(math.radians(270))
+    context.show_text("{}; {} mm".format(font_dict[font], nib_size))
+
+    context.restore()
 
     return surface, context
 
@@ -184,5 +221,7 @@ if __name__ == "__main__":
     args = prepare(raw_args)
     surface, context = create_surface((args.x_paper, args.y_paper), args.type, args.output_file)
     surface, context = draw_grid(surface, context, args.font, args.nib_size, (args.x_paper, args.y_paper), args.margins)
-    surface, context = draw_margins(surface, context, (args.x_paper, args.y_paper), args.margins)
+    if args.type == "PDF":
+        surface, context = draw_margins(surface, context, (args.x_paper, args.y_paper), args.margins)
+        surface, context = write_info(surface, context, args.font, nib_mm, args.margins)
     save_result(surface, context, args.type, args.output_file)

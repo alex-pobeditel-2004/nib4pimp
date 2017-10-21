@@ -1,9 +1,9 @@
 import math
 import cairo
 
-main_line =  [0.6, 0.6, 0.6, 1]
-aux_line =   [0.866, 0.866, 0.866, 1]
-bg_color =   [0.941, 0.941, 0.941, 1]
+main_line = [0.6, 0.6, 0.6, 1]
+aux_line =  [0.866, 0.866, 0.866, 1]
+bg_color =  [0.941, 0.941, 0.941, 1]
 
 main_line_width = 0.5
 aux_line_width = 0.3
