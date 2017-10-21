@@ -102,6 +102,7 @@ def main():
     if args.type != "PDF":
         if args.margins != 15:
             print("[INFO] Margins aren't used in formats other than PDF")
+        args.margins = 0
 
     # Preserve the nib size to show it in the info string:
     global nib_mm

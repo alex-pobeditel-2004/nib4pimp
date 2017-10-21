@@ -8,14 +8,16 @@ bg_color =  [0.941, 0.941, 0.941, 1]
 main_line_width = 0.5
 aux_line_width = 0.3
 
+mark_width = 4
+
 def roman_square_capitals(surface, context, step, field, margins):
     '''This function realizes the grid for the roman square capitals'''
     context.set_line_width(main_line_width)
     context.set_line_cap(cairo.LINE_CAP_SQUARE)
     context.set_line_join(cairo.LINE_JOIN_MITER)
 
-    xpos = margins + main_line_width
-    ypos = margins + main_line_width
+    xpos = margins + main_line_width*2
+    ypos = margins + main_line_width*2
     while ypos < field[1]:
         while xpos < field[0]:
             # Surrounding rectangles:
@@ -62,7 +64,7 @@ def roman_square_capitals(surface, context, step, field, margins):
             context.stroke()
 
             xpos += 12*step
-        xpos = margins + main_line_width
+        xpos = margins + main_line_width*2
         ypos += 12*step
 
     return surface, context
@@ -78,7 +80,7 @@ def antiqua_sans(surface, context, step, field, margins):
     context.set_line_join(cairo.LINE_JOIN_MITER)
 
     # Filled rectangles:
-    ypos = margins + main_line_width
+    ypos = margins + main_line_width*2
     while ypos < field[1]:
         context.set_source_rgba(*bg_color)
         context.rectangle(0, ypos, field[0], 2*multiplier*step)
@@ -88,7 +90,7 @@ def antiqua_sans(surface, context, step, field, margins):
     # Find the vertical delta for a 25 degrees line for chosen paper:
     y_delta = field[0]*math.tan(math.radians(25))
     # Diagonal lines:
-    ypos = margins + main_line_width
+    ypos = margins + main_line_width*2
     context.set_source_rgba(*aux_line)
     while ypos < field[1] + y_delta:
         context.move_to(0, ypos + multiplier*step)
@@ -96,8 +98,8 @@ def antiqua_sans(surface, context, step, field, margins):
         context.stroke()
         ypos += multiplier*step
 
-    xpos = margins + main_line_width
-    ypos = margins + main_line_width
+    xpos = margins + main_line_width*2
+    ypos = margins + main_line_width*2
     while ypos < field[1]:
         # Aux vertical lines:
         while xpos < field[0]:
@@ -108,7 +110,7 @@ def antiqua_sans(surface, context, step, field, margins):
             context.line_to(xpos + 3*multiplier*step, ypos + 8*multiplier*step)
             context.stroke()
             xpos += 6*multiplier*step
-        xpos = margins + main_line_width
+        xpos = margins + main_line_width*2
 
         # Main horizontal lines:
         context.set_source_rgba(*main_line)
@@ -118,6 +120,9 @@ def antiqua_sans(surface, context, step, field, margins):
         context.line_to(field[0], ypos + 8*multiplier*step)
         context.stroke()
         ypos += 8*multiplier*step
+
+    # Checkmates:
+    surface, context = checkmates(surface, context, margins, field[1], step, 8*multiplier, 2*multiplier, 8*multiplier)
 
     return surface, context
 
@@ -132,7 +137,7 @@ def blackletter(surface, context, step, field, margins):
     context.set_line_join(cairo.LINE_JOIN_MITER)
 
     # Filled rectangles:
-    ypos = margins + main_line_width
+    ypos = margins + main_line_width*2
     while ypos < field[1]:
         context.set_source_rgba(*bg_color)
         context.rectangle(0, ypos - 2*multiplier*step, field[0], 4*multiplier*step)
@@ -140,8 +145,8 @@ def blackletter(surface, context, step, field, margins):
         ypos += 9*multiplier*step
 
     # Aux vertical lines:
-    xpos = margins + main_line_width
-    ypos = margins + main_line_width
+    xpos = margins + main_line_width*2
+    ypos = margins + main_line_width*2
     context.set_source_rgba(*aux_line)
     while xpos < field[0]:
         context.move_to(xpos, 0)
@@ -165,6 +170,9 @@ def blackletter(surface, context, step, field, margins):
         context.stroke()
         ypos += 9*multiplier*step
 
+    # Checkmates:
+    surface, context = checkmates(surface, context, margins, field[1], step, 7*multiplier, 2*multiplier, 9*multiplier)
+
     return surface, context
 
 
@@ -179,7 +187,7 @@ def italic(surface, context, step, field, margins):
     # Find the vertical delta between 45 degrees diagonal lines:
     y_step = 2.5*step*math.tan(math.radians(45))
     # 45 degrees diagonal lines:
-    ypos = margins + main_line_width
+    ypos = margins + main_line_width*2
     context.set_source_rgba(*aux_line)
     context.set_dash([0.5, step/4])
     while ypos < field[1] + y_delta:
@@ -189,36 +197,29 @@ def italic(surface, context, step, field, margins):
     context.stroke()
     context.set_dash([])
 
-    # ONLY FOR PDF? Now in millimeters!
-    # Line pointer:
-    xpos = margins + main_line_width
-    ypos = 7.5*step + margins + main_line_width
-    context.set_source_rgba(*main_line)
-    while ypos < field[1]:
-        pointer_y = ypos
-        pointer_x = xpos
-        while True:
-            context.rectangle(pointer_x, ypos - pointer_y, 3, step)
-            context.fill()
-            if pointer_y + step > 5*step:
-                break
-            pointer_y += step
-            # Duct tape!
-            if pointer_x == xpos:
-                pointer_x = xpos + 3
-            else:
-                pointer_x = xpos
-        ypos += 10*step
-
     # Filled rectangles:
-    ypos = -2.5*step + margins + main_line_width
+    ypos = -2.5*step + margins + main_line_width*2
     while ypos < field[1]:
         context.set_source_rgba(*bg_color)
         context.rectangle(0, ypos, field[0], 5*step)
         context.fill()
         ypos += 10*step
 
-    ypos = margins + main_line_width
+    # Find the vertical delta for a 80 degrees line for chosen paper:
+    y_delta = field[0]*math.tan(math.radians(80))
+    # Find the vertical delta between 80 degrees diagonal lines:
+    y_step = 5*step*math.tan(math.radians(80))
+    # 80 degrees diagonal lines:
+    ypos = margins + main_line_width*2
+    context.set_source_rgba(*aux_line)
+    context.set_dash([])
+    while ypos < field[1] + y_delta:
+        context.move_to(0, ypos)
+        context.line_to(field[0], ypos - y_delta)
+        context.stroke()
+        ypos += y_step
+
+    ypos = margins + main_line_width*2
     while ypos < field[1]:
         # Main lines:
         context.set_source_rgba(*main_line)
@@ -234,19 +235,8 @@ def italic(surface, context, step, field, margins):
         context.stroke()
         ypos += 5*step
 
-    # Find the vertical delta for a 80 degrees line for chosen paper:
-    y_delta = field[0]*math.tan(math.radians(80))
-    # Find the vertical delta between 80 degrees diagonal lines:
-    y_step = 5*step*math.tan(math.radians(80))
-    # 80 degrees diagonal lines:
-    ypos = margins + main_line_width
-    context.set_source_rgba(*aux_line)
-    context.set_dash([])
-    while ypos < field[1] + y_delta:
-        context.move_to(0, ypos)
-        context.line_to(field[0], ypos - y_delta)
-        context.stroke()
-        ypos += y_step
+    # Checkmates:
+    surface, context = checkmates(surface, context, margins, field[1], step, 7.5, 2.5, 10)
 
     return surface, context
 
@@ -258,9 +248,9 @@ def copperplate(surface, context, step, field, margins):
     context.set_line_join(cairo.LINE_JOIN_MITER)
 
     # Filled rectangles:
-    ypos = margins + main_line_width
+    ypos = margins + main_line_width*2
     while ypos < field[1]:
-        ypos = margins + main_line_width
+        ypos = margins + main_line_width*2
         while ypos < field[1]:
             context.set_source_rgba(*bg_color)
             context.rectangle(0, ypos, field[0], step)
@@ -272,7 +262,7 @@ def copperplate(surface, context, step, field, margins):
     # Find the vertical delta between diagonal lines:
     y_step = (step/1.75)*math.tan(math.radians(66))
     # Diagonal lines:
-    ypos = margins + main_line_width
+    ypos = margins + main_line_width*2
     context.set_source_rgba(*aux_line)
     while ypos < field[1] + y_delta:
         context.move_to(0, ypos)
@@ -281,7 +271,7 @@ def copperplate(surface, context, step, field, margins):
         ypos += y_step
 
     # Horizontal lines:
-    ypos = margins + main_line_width
+    ypos = margins + main_line_width*2
     while ypos < field[1]:
         context.move_to(0, ypos)
         context.line_to(field[0], ypos)
@@ -298,9 +288,9 @@ def rustic_ustav_minuscule(surface, context, step, field, margins, multiplier):
     context.set_line_join(cairo.LINE_JOIN_MITER)
 
     # Filled rectangles:
-    ypos = margins + main_line_width
+    ypos = margins + main_line_width*2
     while ypos < field[1]:
-        ypos = -1.5*step + margins + main_line_width
+        ypos = -1.5*step + margins + main_line_width*2
         while ypos < field[1]:
             context.set_source_rgba(*bg_color)
             context.rectangle(0, ypos, field[0], 3*step)
@@ -308,7 +298,8 @@ def rustic_ustav_minuscule(surface, context, step, field, margins, multiplier):
             ypos += (multiplier + 3)*step
 
     # Horizontal lines:
-    ypos = margins + main_line_width
+    ypos = margins + main_line_width*2
+    xpos = margins + main_line_width*2
     while ypos < field[1]:
         context.set_source_rgba(*main_line)
         context.move_to(0, ypos + 1.5*step)
@@ -317,5 +308,40 @@ def rustic_ustav_minuscule(surface, context, step, field, margins, multiplier):
         context.line_to(field[0], ypos + (multiplier + 1.5)*step)
         context.stroke()
         ypos += (multiplier + 3)*step
+
+    # Checkmates:
+    surface, context = checkmates(surface, context, margins, field[1], step, multiplier + 1.5, 1.5, multiplier + 3)
+
+    return surface, context
+
+
+def checkmates(surface, context, margins, height, step, lower, upper, big_step):
+    '''This function realizes the checkmates pattern in the beginning of the each line'''
+    context.save()
+
+    ypos = margins + main_line_width*2
+    xpos = margins + main_line_width*2
+    context.set_source_rgba(*main_line)
+    context.set_dash([])
+
+    while ypos < height:
+        mark_y = ypos + lower*step
+        mark_x = xpos + mark_width
+        while mark_y - step >= ypos + upper*step:
+            context.rectangle(mark_x, mark_y, mark_width, -step)
+            context.fill()
+            if mark_x == xpos + mark_width:
+                mark_x = xpos
+            else:
+                mark_x = xpos + mark_width
+            mark_y -= step
+        # Last mark - in case it should be short:
+        if mark_y - step < ypos + upper*step:
+            context.rectangle(mark_x, mark_y, mark_width, -mark_y + (ypos + upper*step))
+            context.fill()
+
+        ypos += big_step*step
+
+    context.restore()
 
     return surface, context
