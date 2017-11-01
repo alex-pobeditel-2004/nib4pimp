@@ -7,7 +7,6 @@ import cairo
 import fonts
 
 # TODO: Paper presets
-# TODO: Shashechki
 
 font_dict = {
     "1": "Roman square capitals",
@@ -28,22 +27,14 @@ def main():
         description="Let's create the grid!",
         formatter_class=argparse.RawTextHelpFormatter
     )
-    parser.add_argument("-f", "--font", type=str, metavar="FONT", choices=["1", "2", "3", "4", "5", "6", "7", "8", "9"], required=True,
+    parser.add_argument("-f", "--font", type=str, metavar="FONT", choices=sorted(font_dict.keys()), required=True,
         help="Font which you want generate a grid for. Accepted values:\n" +
-             "1 - " + font_dict["1"] + "\n" +
-             "2 - " + font_dict["2"] + "\n" +
-             "3 - " + font_dict["3"] + "\n" +
-             "4 - " + font_dict["4"] + "\n" +
-             "5 - " + font_dict["5"] + "\n" +
-             "6 - " + font_dict["6"] + "\n" +
-             "7 - " + font_dict["7"] + "\n" +
-             "8 - " + font_dict["8"] + "\n" +
-             "9 - " + font_dict["9"])
+            "\n".join(sorted([number + " - " + font_name for number, font_name in font_dict.items()])))
     parser.add_argument("-n", "--nib-size", type=float, metavar="NUMBER", required=True,
         help="Width of nib in millimeters. Accepted values:\n" +
              "0.2 ... 30")
     parser.add_argument("-o", "--output-file", type=str, metavar="FILEPATH", required=True)
-    parser.add_argument("-t", "--type", type=str, metavar="FILETYPE", choices=["PDF", "PNG", "SVG"], default="PDF",
+    parser.add_argument("-t", "--type", type=str.upper, metavar="FILETYPE", choices=["PDF", "PNG", "SVG"], default="PDF",
         help="Output filetype. Accepted values:\n" +
              "PDF (default), PNG, SVG")
     parser.add_argument("-x", "--x-paper", type=float, metavar="NUMBER", default=210,
@@ -86,7 +77,7 @@ def main():
         print("[ERROR] Wrong margin size")
         error_flag = 1
 
-    if (not 1 <= args.resolution <= 2000):
+    if (not 1 <= args.resolution <= 2400):
         print("[ERROR] Wrong print resolution")
         error_flag = 1
 
